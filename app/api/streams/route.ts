@@ -41,6 +41,10 @@ export async function POST(req: NextRequest) {
                 status: 411
             })
         }
+        if (data.url.includes("youtu.be/")) {
+            const id = data.url.split("youtu.be/")[1].split(/[?&]/)[0]; // remove query params
+            data.url = `https://www.youtube.com/watch?v=${id}`;
+        }
 
         const match = data.url.match(/[?&]v=([^&]+)/);
         const extractedId = match ? match[1] : null;
@@ -49,16 +53,16 @@ export async function POST(req: NextRequest) {
         const title = dt.title;
         let smallImg = "";
         let bigImg = "";
-        if(dt.thumbnail === undefined || dt.thumbnail.thumbnails.length < 2) {
+        if (dt.thumbnail === undefined || dt.thumbnail.thumbnails.length < 2) {
             smallImg = "https://media.istockphoto.com/id/1175435360/vector/music-note-icon-vector-illustration.jpg?s=612x612&w=0&k=20&c=R7s6RR849L57bv_c7jMIFRW4H87-FjLB8sqZ08mN0OU=";
             bigImg = "https://media.istockphoto.com/id/1175435360/vector/music-note-icon-vector-illustration.jpg?s=612x612&w=0&k=20&c=R7s6RR849L57bv_c7jMIFRW4H87-FjLB8sqZ08mN0OU=";
         }
-        else{
+        else {
             const length = dt.thumbnail.thumbnails.length;
             smallImg = dt.thumbnail.thumbnails[length - 2].url;
             bigImg = dt.thumbnail.thumbnails[length - 1].url;
         }
-        
+
         const stream = await prismaClient.stream.create({
             data: {
                 userId: creatorId ?? '',

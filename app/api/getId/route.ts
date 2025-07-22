@@ -11,6 +11,7 @@ export async function GET(){
             email:session?.user?.email??""
         }
     })
+    console.log(session.user.email);
 
     if(!user){
         return NextResponse.json({

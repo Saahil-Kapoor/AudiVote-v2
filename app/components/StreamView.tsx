@@ -31,7 +31,7 @@ function isStreamWithUpvotes(stream: StreamWithUpvotes | currPlaying): stream is
 }
 
 
-const REFRESH_INTERVAL_MS = 3*1000;
+const REFRESH_INTERVAL_MS = 2.5*1000;
 
 export default function StreamView({
   creatorId
@@ -90,8 +90,9 @@ export default function StreamView({
           return;
         }
         console.log("New stream detected, updating state");
+        console.log("variable",variable.data.streams);
         
-        prev.current = currentStream.extractedId;
+        prev.current = currentStream.extractedId; 
         await axios.post(`/api/currPlaying/?creatorId=${creatorId}`, {
           url: currentStream.extractedId,
           streamId: currentStream.id
@@ -149,22 +150,31 @@ export default function StreamView({
     }
     console.log("Deleting stream:", streamId);
     const res = await axios.delete(`/api/streams/delete/?creatorId=${creatorId}`, { data: { id: streamId } })
-    await axios.delete(`/api/currPlaying/?creatorId=${creatorId}`)
+    const press = await axios.delete(`/api/currPlaying/?creatorId=${creatorId}`)
+    if(press.status != 200) {
+      console.error("Error deleting current playing stream");
+      return;
+    }
     if (res.status != 200) {
       console.error("Error deleting the stream");
       return;
     }
     setAllStreams(all_streams => all_streams.filter(stream => stream.id !== streamId));
-    const curr = all_streams[1];
+    let curr = all_streams;
+    if (curr.length > 0) {
+      curr = curr.filter(stream => stream.id !== streamId);
+    }
+    console.log("Current queue after deletion:", curr);
+    const top = curr[0];
 
-    setQueue(prevQueue => prevQueue.filter(song => song.id !== curr.id));
-    if (curr) {
-      seturl(curr.extractedId);
-      setcurrstate(curr);
-      console.log("Playing next video:", curr.extractedId);
+    setQueue(prevQueue => prevQueue.filter(song => song.id !== top.id));
+    if (top) {
+      seturl(top.extractedId);
+      setcurrstate(top);
+      console.log("Playing next video:", top.extractedId);
       axios.post(`/api/currPlaying/?creatorId=${creatorId}`, {
-        url: curr.extractedId,
-        streamId: curr.id
+        url: top.extractedId,
+        streamId: top.id
       });
     } else {
       seturl(null);
