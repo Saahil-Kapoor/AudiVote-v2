@@ -106,7 +106,7 @@ model Vote {
 
   // Relations
   user   User   @relation(fields: [userId], references: [id])
-  stream Stream @relation(fields: [streamId], references: [id])
+  stream Stream @relation(fields: [streamId], references: [id] , onDelete: Cascade)
 
   @@unique([userId, streamId])
 }
