@@ -1,6 +1,4 @@
 import { prismaClient } from "@/app/lib/db";
-import { PrismaClient } from "@prisma/client";
-import { getPrismaClient } from "@prisma/client/runtime/library";
 import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google";
 
@@ -12,7 +10,7 @@ const handler = NextAuth({
     })
   ],
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user }) {
       if (!user.email) {
         return false; 
       }

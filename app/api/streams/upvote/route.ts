@@ -1,4 +1,5 @@
 import { prismaClient } from "@/app/lib/db";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -45,10 +46,10 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
 
-  } catch (e: any) {
+  } catch (e: unknown) {
 
     // Unique constraint error = already voted
-    if (e.code === "P2002") {
+    if (e instanceof PrismaClientKnownRequestError && e.code === "P2002") {
       return NextResponse.json(
         { message: "Already voted" },
         { status: 400 }

@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "react-hot-toast";
 import { ChevronUp, ChevronDown, Music, Share2, Play, ListMusic } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 
 interface Stream {
   id: string;
@@ -37,9 +38,8 @@ export default function StreamView({ roomId }: { roomId: string }) {
         axios.get(`/api/streams?roomId=${roomId}`),
         axios.get(`/api/currPlaying?roomId=${roomId}`)
       ]);
-      // Sort queue by votes locally to ensure smoothest UI
       const sortedQueue = streamsRes.data.streams.sort(
-        (a: any, b: any) => b._count.votes - a._count.votes
+        (a: Stream, b: Stream) => b._count.votes - a._count.votes
       );
       setQueue(sortedQueue);
       setCurrent(currentRes.data.current);
@@ -200,7 +200,7 @@ export default function StreamView({ roomId }: { roomId: string }) {
                 <div className="flex items-center p-3 gap-4">
                   <div className="relative h-16 w-24 flex-shrink-0 rounded-lg overflow-hidden shadow-inner bg-slate-100">
                     {song.thumbnail ? (
-                      <img src={song.thumbnail} alt="" className="object-cover w-full h-full" />
+                      <Image src={song.thumbnail} alt="" className="object-cover w-full h-full" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-purple-100">
                         <Music className="h-6 w-6 text-purple-300" />

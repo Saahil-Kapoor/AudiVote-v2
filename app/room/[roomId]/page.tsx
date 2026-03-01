@@ -5,14 +5,13 @@ import StreamView from "@/app/components/StreamView";
 import { notFound } from "next/navigation";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     roomId: string;
-  };
+  }>;
 }
 
 export default async function RoomPage({ params }: PageProps) {
-  const { roomId } = params;
-
+  const { roomId } = await params;
   const room = await prismaClient.room.findUnique({
     where: { id: roomId }
   });

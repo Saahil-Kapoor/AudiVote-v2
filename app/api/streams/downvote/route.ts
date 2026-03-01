@@ -1,6 +1,7 @@
 import { prismaClient } from "@/app/lib/db";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { z } from "zod";
 
 const DownvoteSchema = z.object({
@@ -47,10 +48,10 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
 
-  } catch (e: any) {
+  } catch (e: unknown) {
 
     // If vote doesn't exist
-    if (e.code === "P2025") {
+    if (e instanceof PrismaClientKnownRequestError && e.code === "P2025") {
       return NextResponse.json(
         { message: "You haven't voted on this stream" },
         { status: 400 }
