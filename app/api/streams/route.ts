@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 🔹 Validate room exists
+    //  Validate room exists
     const room = await prismaClient.room.findUnique({
       where: { id: roomId }
     });

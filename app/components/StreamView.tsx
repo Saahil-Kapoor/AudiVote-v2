@@ -85,6 +85,14 @@ export default function StreamView({ roomId }: { roomId: string }) {
     fetchState();
   };
 
+  const handleShare = ()=>{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(roomId);
+      toast.success("Room URL copied to clipboard!");
+    } else {
+      toast.error("Clipboard not supported");
+    }
+  }
   return (
     <div className="min-h-screen bg-[#FDFCFE] text-slate-900 font-sans selection:bg-purple-100">
       {/* HEADER SECTION */}
@@ -96,9 +104,10 @@ export default function StreamView({ roomId }: { roomId: string }) {
             </div>
             <h1 className="text-xl font-bold tracking-tight text-purple-950">AudiVote</h1>
           </div>
-          <Button variant="outline" size="sm" className="gap-2 border-purple-100 hover:bg-purple-50">
+          <Button variant="outline" size="sm" className="gap-2 border-purple-100 hover:bg-purple-50"
+          onClick={handleShare}>
             <Share2 className="h-4 w-4 text-purple-600" />
-            Share Room
+            Share Room Id
           </Button>
         </div>
       </header>

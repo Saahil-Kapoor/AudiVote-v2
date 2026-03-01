@@ -14,12 +14,12 @@ export async function POST(req: NextRequest) {
   try {
     const result = await prismaClient.$transaction(async (tx) => {
 
-      // 1️⃣ Remove existing current song
+      // Remove existing current song
       await tx.currentPlaying.deleteMany({
         where: { roomId }
       });
 
-      // 2️⃣ Get highest voted stream
+      // Get highest voted stream
       const next = await tx.stream.findFirst({
         where: { roomId },
         orderBy: {
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
         return null;
       }
 
-      // 3️⃣ Move it to CurrentPlaying
+      // Move it to CurrentPlaying
       const current = await tx.currentPlaying.create({
         data: {
           roomId,
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
         }
       });
 
-      // 4️⃣ Delete it from queue
+      // Delete it from queue
       await tx.stream.delete({
         where: { id: next.id }
       });
@@ -73,12 +73,12 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // 1️⃣ Check if something already playing
+  // Check if something already playing
   let current = await prismaClient.currentPlaying.findUnique({
     where: { roomId }
   });
 
-  // 2️⃣ If nothing playing → auto start next
+  // If nothing playing → auto start next
   if (!current) {
     current = await prismaClient.$transaction(async (tx) => {
 

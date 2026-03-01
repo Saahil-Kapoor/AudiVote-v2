@@ -14,26 +14,24 @@ const handler = NextAuth({
   callbacks: {
     async signIn({ user, account }) {
       if (!user.email) {
-        return false; // Block users without emails
+        return false; 
       }
 
       try {
         await prismaClient.user.upsert({
           where: { email: user.email },
           update: {
-            name: user.name, // Keep their name up to date
+            name: user.name, 
           },
           create: {
             email: user.email,
             name: user.name,
-            // If you use the Provider enum from your schema:
-            // provider: "Google", 
           },
         });
-        return true; // Authorized
+        return true; 
       } catch (e) {
         console.error("Database error during sign-in:", e);
-        return false; // Deny access if DB is down
+        return false;
       }
     },
 
