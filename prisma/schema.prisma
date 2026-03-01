@@ -13,50 +13,125 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User{
-  id String @id @default(uuid())
-  email String @unique
-  provider Provider
+/**
+ * model User{
+ * id String @id @default(uuid())
+ * email String @unique
+ * provider Provider
+ * streams Stream[]
+ * upvotes Upvote[]
+ * }
+ * model Stream{
+ * id String @id @default(uuid())
+ * type StreamType
+ * url String
+ * extractedId String @unique
+ * title String
+ * smallImg String
+ * bigImg String
+ * active Boolean @default(true)
+ * upvotes Upvote[]
+ * userId String
+ * user User @relation(fields:[userId], references: [id])
+ * }
+ * model Upvote{
+ * id String @id @default(uuid())
+ * userId String
+ * streamId String
+ * user User @relation(fields: [userId],references: [id])
+ * stream Stream @relation(fields: [streamId],references: [id], onDelete: Cascade)
+ * @@unique([userId,streamId])
+ * }
+ * model currPlaying{
+ * id String @id @default(uuid())
+ * url String
+ * streamId String
+ * creatorId String
+ * }
+ */
+// =====================
+// USER
+// =====================
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String?  @unique
+  createdAt DateTime @default(now())
+
+  // Relations
+  room  Room?  @relation("CreatorRoom")
+  votes Vote[]
+  Provider Provider?
+}
+
+// =====================
+// ROOM (One per creator)
+// =====================
+model Room {
+  id        String   @id @default(cuid())
+  creatorId String   @unique
+  createdAt DateTime @default(now())
+
+  // Relations
+  creator User            @relation("CreatorRoom", fields: [creatorId], references: [id])
   streams Stream[]
-  upvotes Upvote[]
-
+  playing CurrentPlaying?
 }
 
-model Stream{
-  id String @id @default(uuid())
-  type StreamType
-  url String
-  extractedId String @unique
-  title String
-  smallImg String
-  bigImg String
-  active Boolean @default(true)
-  upvotes Upvote[]
-  userId String
-  user User @relation(fields:[userId], references: [id])
+// =====================
+// STREAM (Song in queue)
+// =====================
+model Stream {
+  id          String   @id @default(cuid())
+  roomId      String
+  title       String
+  url         String
+  extractedId String
+  thumbnail   String?
+  createdAt   DateTime @default(now())
+
+  // Relations
+  room           Room            @relation(fields: [roomId], references: [id] , onDelete: Cascade)
+  votes          Vote[]
 }
 
-model Upvote{
-  id String @id @default(uuid())
-  userId String
-  streamId String 
-  user User @relation(fields: [userId],references: [id])
-  stream Stream @relation(fields: [streamId],references: [id], onDelete: Cascade)
-  @@unique([userId,streamId])
+// =====================
+// VOTE (User ↔ Stream)
+// =====================
+model Vote {
+  id        String   @id @default(cuid())
+  userId    String
+  streamId  String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  stream Stream @relation(fields: [streamId], references: [id])
+
+  @@unique([userId, streamId])
 }
 
-model currPlaying{
-  id String @id @default(uuid())
-  url String
-  streamId String
-  creatorId String
+// =====================
+// CURRENT PLAYING
+// =====================
+model CurrentPlaying {
+  id        String   @id @default(cuid())
+  roomId    String   @unique
+  title     String
+  url       String
+  extractedId String
+  thumbnail String?
+  startedAt DateTime @default(now())
+
+  room Room @relation(fields: [roomId], references: [id],onDelete: Cascade)
+  
 }
 
-enum StreamType{
+enum StreamType {
   Spotify
   Youtube
 }
 
-enum Provider{
+enum Provider {
   Google
 }

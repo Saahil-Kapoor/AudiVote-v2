@@ -2,59 +2,84 @@ import { prismaClient } from "@/app/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-    try {
-        const creatorId = req.nextUrl.searchParams.get("creatorId");
-        if (!creatorId) {
-            return NextResponse.json({
-                message: "Missing creatorId"
-            }, {
-                status: 400
-            })
+  const roomId = req.nextUrl.searchParams.get("roomId");
+
+  if (!roomId) {
+    return NextResponse.json(
+      { message: "Missing roomId" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const result = await prismaClient.$transaction(async (tx) => {
+
+      // 1️⃣ Remove existing current song
+      await tx.currentPlaying.deleteMany({
+        where: { roomId }
+      });
+
+      // 2️⃣ Get highest voted stream
+      const next = await tx.stream.findFirst({
+        where: { roomId },
+        orderBy: {
+          votes: {
+            _count: "desc"
+          }
         }
-        const data = await req.json();
-        const currPlaying = await prismaClient.currPlaying.create({
-            data: {
-                creatorId: creatorId,
-                url: data.url,
-                streamId: data.streamId,
-            }
-        });
-        console.log(currPlaying);
+      });
 
-        return NextResponse.json({
-            message: "Added Streams",
-        })
+      if (!next) {
+        return null;
+      }
 
-    }
-    catch (e) {
-        console.log(e);
-        return NextResponse.json({
-            message: "Error while adding a stream"
-        }, {
-            status: 411
-        })
-    }
+      // 3️⃣ Move it to CurrentPlaying
+      const current = await tx.currentPlaying.create({
+        data: {
+          roomId,
+          title: next.title,
+          url: next.url,
+          extractedId: next.extractedId,
+          thumbnail: next.thumbnail,
+        }
+      });
+
+      // 4️⃣ Delete it from queue
+      await tx.stream.delete({
+        where: { id: next.id }
+      });
+
+      return current;
+    });
+
+    return NextResponse.json({ current: result });
+
+  } catch (e) {
+    console.error("Error advancing song:", e);
+    return NextResponse.json(
+      { message: "Error advancing song" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function GET(req: NextRequest) {
-    const creatorId = req.nextUrl.searchParams.get("creatorId");
-    if (!creatorId) {
-        return NextResponse.json({
-            message: "Missing creatorId"
-        }, {
-            status: 400
-        })
-    }
-    const streams = await prismaClient.currPlaying.findFirst({
-        where: {
-            creatorId: creatorId ?? ""
-        }
-    })
-    //console.log(streams);
-    return NextResponse.json({
-        streams: streams
-    })
+  const roomId = req.nextUrl.searchParams.get("roomId");
+
+  if (!roomId) {
+    return NextResponse.json(
+      { message: "Missing roomId" },
+      { status: 400 }
+    );
+  }
+
+  const current = await prismaClient.currentPlaying.findUnique({
+    where: { roomId }
+  });
+
+  return NextResponse.json({ current });
 }
+/*
 
 export async function DELETE(req: NextRequest) {
     const creatorId = req.nextUrl.searchParams.get("creatorId");
@@ -75,3 +100,5 @@ export async function DELETE(req: NextRequest) {
         streams: streams
     })
 }
+
+*/

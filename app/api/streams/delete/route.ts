@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prismaClient } from '@/app/lib/db'
 
+/*
 export async function DELETE(req: NextRequest) {
     //const session = await getServerSession();
     const creatorId = req.nextUrl.searchParams.get("creatorId");
@@ -25,7 +26,7 @@ export async function DELETE(req: NextRequest) {
             status: 411
         })
     }
-        */
+
     //console.log("this is the body",req.body)
     console.log("Deleting stream");
 
@@ -57,3 +58,4 @@ export async function DELETE(req: NextRequest) {
         status: 200
     })
 }
+*/

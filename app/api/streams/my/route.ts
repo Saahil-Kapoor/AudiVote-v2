@@ -1,48 +1,44 @@
 import { NextResponse } from "next/server";
+import { prismaClient } from "@/app/lib/db";
 
-import {prismaClient} from '@/app/lib/db'
-import { getServerSession } from "next-auth/next";
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const roomId = searchParams.get("roomId");
 
-export async function GET() {
-    const session = await getServerSession();
+  if (!roomId) {
+    return NextResponse.json(
+      { message: "roomId required" },
+      { status: 400 }
+    );
+  }
 
-    const user = await prismaClient.user.findFirst({
-        where: {
-            email: session?.user?.email ?? ""
-        }
-    })
+  // Optional: validate room exists
+  const room = await prismaClient.room.findUnique({
+    where: { id: roomId }
+  });
 
-    if (!user) {
-        return NextResponse.json({
-            message: "Unauthenticated"
-        }, {
-            status: 411
-        })
+  if (!room) {
+    return NextResponse.json(
+      { message: "Room not found" },
+      { status: 404 }
+    );
+  }
+
+  const streams = await prismaClient.stream.findMany({
+    where: {
+      roomId
+    },
+    include: {
+      _count: {
+        select: { votes: true }
+      }
+    },
+    orderBy: {
+      votes: {
+        _count: "desc"
+      }
     }
-    const streams = await prismaClient.stream.findMany({
-        where: {
-            userId: user.id ?? ""
-        },
-        include:{
-            _count:{
-                select:{
-                    upvotes:true
-                }
-            },
-            upvotes:{
-                where:{
-                    userId:user.id
-                }
-            }
-        },
-        orderBy: {
-            upvotes:{
-                _count: 'desc'
-            }
-        }
-    })
-    //console.log(streams);
-    return NextResponse.json({
-        streams: streams
-    })
+  });
+
+  return NextResponse.json({ streams });
 }
